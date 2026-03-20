@@ -134,7 +134,7 @@ jobs:
       - name: Trigger Vercel deploy hook – ${{ matrix.niche }}
         if: ${{ vars[format('VERCEL_HOOK_{0}', matrix.niche)] != '' }}
         run: |
-          HOOK_URL="${{ vars[format('VERCEL_HOOK_{0}', upper(matrix.niche))] }}"
+                  HOOK_URL="${{ vars[format('VERCEL_HOOK_{0}', matrix.niche)] }}"
           curl -X POST "$HOOK_URL" || true
 
   # ──────────────────────────────────────────────────────────────────────────
