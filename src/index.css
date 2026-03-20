@@ -1,0 +1,23 @@
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #FFBF00;
+  --color-primary-light: #FFE2AB;
+  --color-background: #050505;
+  --color-surface: #0A0A0A;
+  --color-surface-container-low: #1C1B1B;
+  --color-surface-container-highest: #353534;
+  --color-on-surface: #E5E2E1;
+  --color-outline: #9c8f78;
+  --color-outline-variant: #504532;
+  --color-danger: #FF4444;
+
+  --font-headline: "Space Grotesk", sans-serif;
+  --font-body: "Inter", sans-serif;
+  --font-mono: "Roboto Mono", monospace;
+
+  --text-giant: clamp(3.5rem, 12vw, 12rem);
+
+  --tracking-super-wide: 0.3em;
+  --tracking-ultra-wide: 0.5em;
+}

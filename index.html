@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="de" class="dark scroll-smooth">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
+    <title>EU MRL REGISTRY | Sovereign Data Architecture</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700;800;900&family=Roboto+Mono:wght@100;200;300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Custom CSS -->
+    <style>
+        body {
+            background-color: #050505;
+            color: #E5E2E1;
+            cursor: none; /* Custom Cursor */
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        /* Noise Overlay (Film Grain) */
+        .noise-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            pointer-events: none;
+            opacity: 0.03;
+            z-index: 9999;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+        }
+
+        /* Custom Amber Cursor */
+        .custom-cursor {
+            width: 8px;
+            height: 8px;
+            background: #FFBF00;
+            border-radius: 50%;
+            position: fixed;
+            pointer-events: none;
+            z-index: 10000;
+            transform: translate(-50%, -50%);
+            transition: width 0.2s, height 0.2s, background-color 0.2s;
+            box-shadow: 0 0 15px rgba(255, 191, 0, 0.6);
+            mix-blend-mode: difference;
+        }
+        
+        .custom-cursor.hovered {
+            width: 40px;
+            height: 40px;
+            background: rgba(255, 191, 0, 0.2);
+            border: 1px solid #FFBF00;
+            box-shadow: none;
+        }
+
+        /* Hide custom cursor on touch devices */
+        @media (hover: none) and (pointer: coarse) {
+            body { cursor: auto; }
+            .custom-cursor { display: none; }
+        }
+
+        /* Glassmorphism Panels */
+        .glass-panel {
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            background: rgba(10, 10, 10, 0.6);
+            border: 1px solid rgba(255, 191, 0, 0.15);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+        }
+
+        /* Animations */
+        .fade-up {
+            animation: fadeUpAnim 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            opacity: 0;
+            transform: translateY(30px);
+        }
+        
+        .delay-100 { animation-delay: 100ms; }
+        .delay-200 { animation-delay: 200ms; }
+        .delay-300 { animation-delay: 300ms; }
+        .delay-400 { animation-delay: 400ms; }
+
+        @keyframes fadeUpAnim {
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #050505; }
+        ::-webkit-scrollbar-thumb { background: #353534; border-radius: 0px; }
+        ::-webkit-scrollbar-thumb:hover { background: #504532; }
+
+        /* Modal Transitions */
+        .modal-enter { opacity: 0; pointer-events: none; }
+        .modal-enter-active { opacity: 1; pointer-events: auto; transition: opacity 0.4s ease; }
+        .modal-exit { opacity: 1; pointer-events: auto; }
+        .modal-exit-active { opacity: 0; pointer-events: none; transition: opacity 0.4s ease; }
+    </style>
+</head>
+<body class="antialiased selection:bg-primary selection:text-background flex flex-col min-h-screen">
+
+    <!-- Global Textures & Elements -->
+    <div class="noise-overlay"></div>
+    <div class="custom-cursor" id="cursor"></div>
+
+    <!-- Navigation -->
+    <nav class="fixed top-0 left-0 w-full z-50 px-6 md:px-12 py-8 flex justify-between items-start mix-blend-difference pointer-events-none">
+        <div class="pointer-events-auto">
+            <span class="font-mono text-[10px] tracking-super-wide text-primary uppercase">SOV_OMEGA.SYS</span>
+        </div>
+        <div class="hidden md:flex gap-12 pointer-events-auto font-mono text-[10px] tracking-super-wide text-outline uppercase">
+            <a href="#" class="hover:text-primary transition-colors duration-300 interactive">REPORTS_01</a>
+            <a href="#" class="hover:text-primary transition-colors duration-300 interactive">REGULATIONS_02</a>
+            <a href="#" class="hover:text-primary transition-colors duration-300 interactive">ANALYTICS_03</a>
+            <a href="#" class="hover:text-primary transition-colors duration-300 interactive">ARCHIVE_04</a>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="flex-grow relative w-full overflow-hidden">
+        
+        <!-- Hero Section -->
+        <section class="pt-32 md:pt-48 px-6 md:px-12 w-full relative z-10">
+            <h1 class="text-giant leading-[0.85] font-black font-headline tracking-tighter text-primary uppercase fade-up">
+                EU MRL<br/>REGISTRY
+            </h1>
+            
+            <div class="mt-12 md:mt-16 flex flex-col md:flex-row justify-between items-start md:items-end border-t border-outline-variant/30 pt-6 fade-up delay-100 gap-8 md:gap-0">
+                <div class="max-w-2xl">
+                    <p class="text-lg md:text-xl font-light leading-snug tracking-tight text-outline">
+                        UNIFIED TOXICOLOGICAL RESIDUE MONITORING FOR THE <span class="text-primary font-medium">NECTAR HIVE</span>. SOVEREIGN DATA ARCHITECTURE FOR THE AGRO-INTELLIGENCE ERA.
+                    </p>
+                </div>
+                <div class="flex flex-col items-start md:items-end font-mono text-[10px] uppercase text-outline/60 tracking-widest gap-1">
+                    <span>Protocol: V9.2.0</span>
+                    <span>Status: Matrix_Active</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Spatial Feature & Terminal Section -->
+        <section class="relative w-full min-h-[60vh] md:h-[80vh] flex flex-col md:flex-row items-center justify-end px-6 md:px-12 mt-16 md:-mt-24 z-20">
+            
+            <!-- Background Graphic (Absolute) -->
+            <div class="absolute left-1/2 md:left-1/3 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[150%] md:w-[800px] h-auto z-0 pointer-events-none opacity-10 mix-blend-screen">
+                <img src="https://images.unsplash.com/photo-1635070041078-e363dbe005cb?q=80&w=2000&auto=format&fit=crop" alt="Matrix Graphic" class="w-full h-full object-contain rotate-12" style="filter: grayscale(100%) contrast(150%);">
+            </div>
+
+            <!-- Terminal Panel -->
+            <div class="glass-panel p-8 md:p-10 w-full md:w-[420px] z-20 relative fade-up delay-200">
+                <div class="flex items-center justify-between mb-10">
+                    <span class="font-mono text-[10px] text-primary tracking-super-wide uppercase">LIVE_INSIGHT_TERMINAL</span>
+                    <div class="w-1.5 h-1.5 bg-primary rounded-none animate-pulse shadow-[0_0_10px_#FFBF00]"></div>
+                </div>
+                
+                <div class="font-mono text-xs text-on-surface/80 space-y-5 leading-relaxed uppercase">
+                    <p class="text-outline/60">[SYSTEM: ANALYSING_GLYPHOSATE]</p>
+                    <p class="text-primary font-bold">[INSIGHT: RESIDUE_DECREASE_27.4%_YOY]</p>
+                    <p class="text-outline/60">[CRAWLER: TOLLBIT_SYNC_OK]</p>
+                    <p class="text-danger">[ALERT: DRAFT_2025/V4_DETECTED]</p>
+                </div>
+                
+                <div class="mt-10 pt-8 border-t border-white/10">
+                    <button class="w-full bg-primary text-background font-headline font-bold py-4 uppercase tracking-super-wide text-xs hover:bg-primary-light transition-all duration-300 interactive shadow-[0_0_20px_rgba(255,191,0,0.2)] hover:shadow-[0_0_30px_rgba(255,191,0,0.4)]">
+                        DEPLOY DATA GRID
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Data Grid Section (CSS Grid, No Tables) -->
+        <section class="w-full bg-surface border-y border-white/5 px-6 md:px-12 py-20 md:py-32 mt-12 relative z-20">
+            <div class="flex flex-col w-full">
+                
+                <!-- Grid Header (Hidden on mobile, visible on md+) -->
+                <div class="hidden md:grid grid-cols-12 gap-4 pb-6 border-b border-primary/20 font-mono text-[10px] tracking-super-wide text-outline uppercase">
+                    <div class="col-span-4">Substance_ID</div>
+                    <div class="col-span-3">Category_Alpha</div>
+                    <div class="col-span-2">MRL_LVL</div>
+                    <div class="col-span-2">Reg_Status</div>
+                    <div class="col-span-1 text-right">Risk</div>
+                </div>
+
+                <!-- Grid Rows -->
+                <!-- Row 1 -->
+                <div class="group relative grid grid-cols-1 md:grid-cols-12 gap-4 md:gap-4 py-8 md:py-10 border-b border-white/5 items-center hover:bg-surface-container-low transition-colors duration-300 interactive">
+                    <!-- Hover Indicator -->
+                    <div class="absolute left-0 top-1/2 -translate-y-1/2 w-1.5 h-1.5 bg-primary opacity-0 group-hover:opacity-100 transition-opacity duration-300 -ml-3 md:-ml-6 shadow-[0_0_10px_#FFBF00]"></div>
+                    
+                    <div class="col-span-1 md:col-span-4 font-headline text-3xl md:text-4xl font-bold tracking-tighter uppercase text-on-surface">Glyphosate</div>
+                    <div class="col-span-1 md:col-span-3 font-mono text-[10px] tracking-widest text-outline uppercase">Cereals / Wheat</div>
+                    <div class="col-span-1 md:col-span-2 font-mono text-xl text-primary">10.00</div>
+                    <div class="col-span-1 md:col-span-2">
+                        <span class="inline-block px-3 py-1.5 border border-primary/40 text-[9px] font-mono text-primary uppercase tracking-widest bg-primary/5">Authorized</span>
+                    </div>
+                    <div class="col-span-1 md:col-span-1 md:text-right font-mono text-xs text-outline/60">0.14</div>
+                </div>
+
+                <!-- Row 2 -->
+                <div class="group relative grid grid-cols-1 md:grid-cols-12 gap-4 md:gap-4 py-8 md:py-10 border-b border-white/5 items-center hover:bg-surface-container-low transition-colors duration-300 interactive">
+                    <div class="absolute left-0 top-1/2 -translate-y-1/2 w-1.5 h-1.5 bg-primary opacity-0 group-hover:opacity-100 transition-opacity duration-300 -ml-3 md:-ml-6 shadow-[0_0_10px_#FFBF00]"></div>
+                    
+                    <div class="col-span-1 md:col-span-4 font-headline text-3xl md:text-4xl font-bold tracking-tighter uppercase text-on-surface">Chlorpyrifos</div>
+                    <div class="col-span-1 md:col-span-3 font-mono text-[10px] tracking-widest text-outline uppercase">Citrus / Orange</div>
+                    <div class="col-span-1 md:col-span-2 font-mono text-xl text-primary">0.01*</div>
+                    <div class="col-span-1 md:col-span-2">
+                        <span class="inline-block px-3 py-1.5 border border-danger/40 text-[9px] font-mono text-danger uppercase tracking-widest bg-danger/5">Banned</span>
+                    </div>
+                    <div class="col-span-1 md:col-span-1 md:text-right font-mono text-xs text-outline/60">0.98</div>
+                </div>
+
+                <!-- Row 3 -->
+                <div class="group relative grid grid-cols-1 md:grid-cols-12 gap-4 md:gap-4 py-8 md:py-10 border-b border-white/5 items-center hover:bg-surface-container-low transition-colors duration-300 interactive">
+                    <div class="absolute left-0 top-1/2 -translate-y-1/2 w-1.5 h-1.5 bg-primary opacity-0 group-hover:opacity-100 transition-opacity duration-300 -ml-3 md:-ml-6 shadow-[0_0_10px_#FFBF00]"></div>
+                    
+                    <div class="col-span-1 md:col-span-4 font-headline text-3xl md:text-4xl font-bold tracking-tighter uppercase text-on-surface">Acetamiprid</div>
+                    <div class="col-span-1 md:col-span-3 font-mono text-[10px] tracking-widest text-outline uppercase">Pome Fruit / Apple</div>
+                    <div class="col-span-1 md:col-span-2 font-mono text-xl text-primary">0.80</div>
+                    <div class="col-span-1 md:col-span-2">
+                        <span class="inline-block px-3 py-1.5 border border-outline-variant text-[9px] font-mono text-outline uppercase tracking-widest bg-surface-container-low">Review_Pending</span>
+                    </div>
+                    <div class="col-span-1 md:col-span-1 md:text-right font-mono text-xs text-outline/60">0.44</div>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- Branding & Monetization Matrix -->
+        <section class="w-full py-24 md:py-40 px-6 md:px-12 grid grid-cols-1 md:grid-cols-12 gap-16 md:gap-12 items-end relative z-20">
+            <div class="col-span-1 md:col-span-6 fade-up delay-300">
+                <div class="flex items-center gap-6 mb-10">
+                    <div class="w-16 h-[1px] bg-primary"></div>
+                    <span class="font-mono text-[10px] tracking-ultra-wide text-primary uppercase">Powered_By_Nectar</span>
+                </div>
+                <h3 class="text-4xl md:text-6xl lg:text-7xl font-black font-headline tracking-tighter leading-[0.9] uppercase">
+                    Hyper-optimized<br/>Data Integrity.
+                </h3>
+            </div>
+            
+            <div class="col-span-1 md:col-span-6 flex flex-col sm:flex-row flex-wrap gap-4 md:justify-end fade-up delay-400">
+                <div class="p-8 border border-white/10 bg-surface flex-1 min-w-[200px] flex flex-col gap-6 hover:border-white/20 transition-colors">
+                    <span class="font-mono text-[9px] text-outline uppercase tracking-widest">Data_Points_Pure</span>
+                    <span class="text-4xl md:text-5xl font-black font-headline text-primary">500B</span>
+                </div>
+                <div class="p-8 border border-white/10 bg-surface flex-1 min-w-[200px] flex flex-col gap-6 hover:border-white/20 transition-colors">
+                    <span class="font-mono text-[9px] text-outline uppercase tracking-widest">Tollbit_Opt</span>
+                    <span class="text-4xl md:text-5xl font-black font-headline text-primary">100%</span>
+                </div>
+                <div class="p-8 border border-primary/30 bg-primary/5 flex-1 min-w-[200px] flex flex-col gap-6 relative overflow-hidden">
+                    <div class="absolute top-0 right-0 w-16 h-16 bg-primary/10 blur-2xl"></div>
+                    <span class="font-mono text-[9px] text-primary uppercase tracking-widest">Request_Cost</span>
+                    <span class="text-4xl md:text-5xl font-black font-headline text-primary">$0.01</span>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="w-full border-t border-white/5 py-10 px-6 md:px-12 flex flex-col md:flex-row justify-between items-start md:items-center gap-8 md:gap-0 bg-surface relative z-20">
+        <div class="font-mono text-[9px] tracking-widest text-outline/60 flex flex-col sm:flex-row gap-4 sm:gap-12 uppercase">
+            <span>©2026 EU MRL REGISTRY</span>
+            <span>UNIT OF HENDLER DYNASTY MEDIA</span>
+        </div>
+        <div class="flex flex-col sm:flex-row gap-6 sm:gap-10 font-mono text-[9px] text-outline uppercase tracking-super-wide">
+            <button onclick="openModal('impressum')" class="text-left hover:text-primary transition-all duration-300 interactive">Terms of Sovereignty</button>
+            <button onclick="openModal('privacy')" class="text-left hover:text-primary transition-all duration-300 interactive">Privacy Protocol</button>
+        </div>
+    </footer>
+
+    <!-- Full-Screen Modal System -->
+    <div id="legal-modal" class="fixed inset-0 z-[200] modal-enter flex items-center justify-center p-4 md:p-12">
+        <!-- Backdrop -->
+        <div class="absolute inset-0 bg-[#0A0A0A]/90 backdrop-blur-[40px]" onclick="closeModal()"></div>
+        
+        <!-- Modal Content Container -->
+        <div class="relative w-full max-w-4xl max-h-full bg-[#0A0A0A] border border-primary/30 shadow-[0_0_50px_rgba(0,0,0,0.8)] flex flex-col">
+            
+            <!-- Header -->
+            <div class="flex justify-between items-center p-6 md:p-8 border-b border-white/10">
+                <h2 id="modal-title" class="font-headline text-2xl md:text-3xl font-bold text-primary tracking-tight uppercase">Document</h2>
+                <button onclick="closeModal()" class="text-outline hover:text-primary transition-colors interactive p-2">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square" stroke-linejoin="miter">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+            
+            <!-- Scrollable Body -->
+            <div class="p-6 md:p-10 overflow-y-auto custom-scrollbar">
+                <div id="modal-body" class="font-body text-sm text-[#F5F5F7]/70 leading-relaxed space-y-6 max-w-3xl">
+                    <!-- Content injected via JS -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Vanilla JS Interactions -->
+    <script>
+        // Custom Cursor Logic
+        const cursor = document.getElementById('cursor');
+        const interactives = document.querySelectorAll('.interactive, a, button');
+
+        // Only run cursor logic if device supports hover
+        if (window.matchMedia("(hover: hover) and (pointer: fine)").matches) {
+            document.addEventListener('mousemove', (e) => {
+                cursor.style.left = e.clientX + 'px';
+                cursor.style.top = e.clientY + 'px';
+            });
+
+            interactives.forEach(el => {
+                el.addEventListener('mouseenter', () => cursor.classList.add('hovered'));
+                el.addEventListener('mouseleave', () => cursor.classList.remove('hovered'));
+            });
+        }
+
+        // Modal Logic & Content
+        const modal = document.getElementById('legal-modal');
+        const modalTitle = document.getElementById('modal-title');
+        const modalBody = document.getElementById('modal-body');
+
+        const legalTexts = {
+            impressum: {
+                title: "Terms of Sovereignty (Impressum)",
+                content: `
+                    <h3 class="text-lg font-bold text-white mt-8 mb-3 font-headline tracking-tight">Angaben gemäß § 5 TMG</h3>
+                    <p><strong>Hendler Dynasty UG (haftungsbeschränkt)</strong><br>
+                    Auftretend unter der Marke: Hendler Dynasty Media<br>
+                    Kriekauer Straße 49<br>
+                    04425 Taucha, Deutschland</p>
+                    
+                    <h3 class="text-lg font-bold text-white mt-8 mb-3 font-headline tracking-tight">Kontakt</h3>
+                    <p>E-Mail: <a href="mailto:hendler.dynasty@gmail.com" class="text-primary hover:text-primary-light transition-colors interactive">hendler.dynasty@gmail.com</a></p>
+                    
+                    <h3 class="text-lg font-bold text-white mt-8 mb-3 font-headline tracking-tight">Registereintrag</h3>
+                    <p>Eintragung im Handelsregister.<br>
+                    Registergericht: Amtsgericht Leipzig<br>
+                    Registernummer: HRB 39942</p>
+                    
+                    <h3 class="text-lg font-bold text-white mt-8 mb-3 font-headline tracking-tight">Umsatzsteuer-ID</h3>
+                    <p>Gemäß § 27 a Umsatzsteuergesetz:<br>
+                    2371104939</p>
+                    
+                    <h3 class="text-lg font-bold text-white mt-8 mb-3 font-headline tracking-tight">Verantwortlich für den Inhalt</h3>
+                    <p>Nach § 55 Abs. 2 RStV:<br>
+                    Marius Hendler<br>
+                    Kriekauer Straße 49<br>
+                    04425 Taucha, Deutschland</p>
+                    
+                    <div class="mt-10 pt-6 border-t border-white/10 text-xs text-outline">
+                        <p>Streitschlichtung: Die Europäische Kommission stellt eine Plattform zur Online-Streitbeilegung (OS) bereit: <a href="https://ec.europa.eu/consumers/odr" target="_blank" rel="noopener noreferrer" class="text-primary hover:underline interactive">https://ec.europa.eu/consumers/odr</a>. Unsere E-Mail-Adresse finden Sie oben im Impressum. Wir sind nicht bereit oder verpflichtet, an Streitbeilegungsverfahren vor einer Verbraucherschlichtungsstelle teilzunehmen.</p>
+                    </div>
+                `
+            },
+            privacy: {
+                title: "Privacy Protocol (Datenschutz)",
+                content: `
+                    <p class="text-primary font-mono text-xs mb-6 uppercase tracking-widest">[SYSTEM LOG: PRIVACY_PROTOCOL_INITIATED]</p>
+                    
+                    <h3 class="text-lg font-bold text-white mt-8 mb-3 font-headline tracking-tight">1. Datenschutz auf einen Blick</h3>
+                    <p><strong>Allgemeine Hinweise</strong><br>
+                    Die folgenden Hinweise geben einen einfachen Überblick darüber, was mit Ihren personenbezogenen Daten passiert, wenn Sie diese Website besuchen. Personenbezogene Daten sind alle Daten, mit denen Sie persönlich identifiziert werden können.</p>
+                    
+                    <h3 class="text-lg font-bold text-white mt-8 mb-3 font-headline tracking-tight">2. Datenerfassung auf dieser Website</h3>
+                    <p><strong>Wer ist verantwortlich für die Datenerfassung auf dieser Website?</strong><br>
+                    Die Datenverarbeitung auf dieser Website erfolgt durch den Websitebetreiber. Dessen Kontaktdaten können Sie dem Abschnitt "Hinweis zur Verantwortlichen Stelle" in dieser Datenschutzerklärung entnehmen.</p>
+                    
+                    <p class="mt-4"><strong>Wie erfassen wir Ihre Daten?</strong><br>
+                    Ihre Daten werden zum einen dadurch erhoben, dass Sie uns diese mitteilen. Hierbei kann es sich z. B. um Daten handeln, die Sie in ein Kontaktformular eingeben. Andere Daten werden automatisch oder nach Ihrer Einwilligung beim Besuch der Website durch unsere IT-Systeme erfasst. Das sind vor allem technische Daten (z. B. Internetbrowser, Betriebssystem oder Uhrzeit des Seitenaufrufs).</p>
+                    
+                    <h3 class="text-lg font-bold text-white mt-8 mb-3 font-headline tracking-tight">3. Hosting und Content Delivery Networks (CDN)</h3>
+                    <p>Diese Website wird extern gehostet. Die personenbezogenen Daten, die auf dieser Website erfasst werden, werden auf den Servern des Hosters gespeichert. Hierbei kann es sich v. a. um IP-Adressen, Kontaktanfragen, Meta- und Kommunikationsdaten, Vertragsdaten, Kontaktdaten, Namen, Websitezugriffe und sonstige Daten, die über eine Website generiert werden, handeln.</p>
+                    
+                    <div class="mt-10 pt-6 border-t border-white/10 text-xs text-outline">
+                        <p>Für detaillierte Anfragen zum Datenschutzprotokoll kontaktieren Sie bitte den Administrator unter der im Impressum angegebenen Adresse.</p>
+                    </div>
+                `
+            }
+        };
+
+        function openModal(type) {
+            const data = legalTexts[type];
+            if (!data) return;
+            
+            modalTitle.textContent = data.title;
+            modalBody.innerHTML = data.content;
+            
+            // Re-bind cursor events for newly injected interactive elements
+            if (window.matchMedia("(hover: hover) and (pointer: fine)").matches) {
+                modalBody.querySelectorAll('a, button, .interactive').forEach(el => {
+                    el.addEventListener('mouseenter', () => cursor.classList.add('hovered'));
+                    el.addEventListener('mouseleave', () => cursor.classList.remove('hovered'));
+                });
+            }
+
+            modal.classList.remove('modal-enter', 'modal-exit-active');
+            modal.classList.add('modal-enter-active');
+            document.body.style.overflow = 'hidden'; // Prevent background scrolling
+        }
+
+        function closeModal() {
+            modal.classList.remove('modal-enter-active');
+            modal.classList.add('modal-exit-active');
+            
+            setTimeout(() => {
+                modal.classList.remove('modal-exit-active');
+                modal.classList.add('modal-enter');
+                document.body.style.overflow = ''; // Restore scrolling
+            }, 400);
+        }
+
+        // Close modal on Escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && modal.classList.contains('modal-enter-active')) {
+                closeModal();
+            }
+        });
+    </script>
+    <script type="module" src="/src/main.tsx"></script>
+</body>
+</html>
