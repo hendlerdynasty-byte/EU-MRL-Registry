@@ -7,6 +7,8 @@ Usage: python pipeline.py --niche pesticides
 
 import os, sys, json, csv, hashlib, time, argparse, subprocess
 from datetime import datetime, timezone
+from decimal import Decimal
+from typing import Optional
 from pathlib import Path
 
 import psycopg2
@@ -52,6 +54,15 @@ NICHES = {
 OPENROUTER_URL   = "https://openrouter.ai/api/v1/chat/completions"
 OPENROUTER_MODEL = os.getenv("OPENROUTER_MODEL", "nvidia/nemotron-3-super-120b-a12b:free")
 OPENROUTER_KEY   = os.getenv("OPENROUTER_API_KEY", "")
+
+# ── Custom JSON encoder (handles Decimal, date etc.) ──────────────────────────
+class SafeEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, Decimal):
+            return float(obj)
+        if hasattr(obj, 'isoformat'):
+            return obj.isoformat()
+        return super().default(obj)
 
 # ── DB Connection ──────────────────────────────────────────────────────────────
 def get_conn(niche_key: str):
@@ -203,7 +214,7 @@ def generate_insights(niche_key: str) -> dict:
     else:
         prompt_template = _default_prompt(cfg)
 
-    prompt = prompt_template.replace("{{DATA_JSON}}", json.dumps(data_json, ensure_ascii=False, indent=2))
+    prompt = prompt_template.replace("{{DATA_JSON}}", json.dumps(data_json, cls=SafeEncoder, ensure_ascii=False, indent=2))
     prompt = prompt.replace("{{NICHE_TITLE}}", cfg["title"])
     prompt = prompt.replace("{{DATE}}", datetime.now(timezone.utc).strftime("%Y-%m-%d"))
 
@@ -315,10 +326,10 @@ def export_static(niche_key: str, insights: dict):
         "total":      len(data),
         "records":    data[:500],  # cap at 500 for static file size
     }
-    (out_dir / "data.json").write_text(json.dumps(payload, default=str, ensure_ascii=False, indent=2))
+    (out_dir / "data.json").write_text(json.dumps(payload, cls=SafeEncoder, ensure_ascii=False, indent=2))
 
     # insights.json
-    (out_dir / "insights.json").write_text(json.dumps(insights, default=str, ensure_ascii=False, indent=2))
+    (out_dir / "insights.json").write_text(json.dumps(insights, cls=SafeEncoder, ensure_ascii=False, indent=2))
 
     # data.csv
     if data:
