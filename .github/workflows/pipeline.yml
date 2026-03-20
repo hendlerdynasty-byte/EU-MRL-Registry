@@ -130,13 +130,7 @@ jobs:
       - name: Push to main
         run: git push origin main
 
-      # ── 6. Trigger Vercel redeploy (optional webhook) ────────────────────────
-      - name: Trigger Vercel deploy hook – ${{ matrix.niche }}
-        if: ${{ vars[format('VERCEL_HOOK_{0}', matrix.niche)] != '' }}
-        run: |
-                  HOOK_URL="${{ vars[format('VERCEL_HOOK_{0}', matrix.niche)] }}"
-          curl -X POST "$HOOK_URL" || true
-
+      # ── 6. Trigger Vercel redeploy (opti
   # ──────────────────────────────────────────────────────────────────────────
   # Summary job (runs after all niches finish)
   # ──────────────────────────────────────────────────────────────────────────
