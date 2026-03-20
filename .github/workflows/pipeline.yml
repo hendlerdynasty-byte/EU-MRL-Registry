@@ -1,0 +1,158 @@
+name: EU Data Portal Pipeline
+
+on:
+  # ── Scheduled runs ──────────────────────────────────────────────────────────
+  schedule:
+    - cron: "0 4 * * 1"   # Every Monday 04:00 UTC  → full import + insights
+    - cron: "0 5 * * 3"   # Every Wednesday 05:00 UTC → insights refresh only
+  # ── Manual trigger (add ?niche=climate to override) ─────────────────────────
+  workflow_dispatch:
+    inputs:
+      niche:
+        description: "Which niche to run (pesticides | climate | procurement | all)"
+        required: true
+        default: "all"
+      skip_import:
+        description: "Skip data import (yes/no)"
+        required: false
+        default: "no"
+
+env:
+  PYTHON_VERSION: "3.11"
+  OPENROUTER_MODEL: "nvidia/nemotron-3-super-120b-a12b:free"
+
+jobs:
+  # ──────────────────────────────────────────────────────────────────────────
+  # Job Matrix: run one job per niche, in parallel
+  # ──────────────────────────────────────────────────────────────────────────
+  pipeline:
+    name: "Pipeline – ${{ matrix.niche }}"
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false      # one failing niche won't cancel others
+      matrix:
+        niche:
+          - pesticides
+          - climate
+          - procurement
+        # Filter matrix by manual input (when not "all")
+        exclude:
+          - niche: ${{ github.event.inputs.niche != 'all' && github.event.inputs.niche != 'pesticides' && 'pesticides' || '' }}
+          - niche: ${{ github.event.inputs.niche != 'all' && github.event.inputs.niche != 'climate' && 'climate' || '' }}
+          - niche: ${{ github.event.inputs.niche != 'all' && github.event.inputs.niche != 'procurement' && 'procurement' || '' }}
+
+    steps:
+      # ── 1. Checkout ──────────────────────────────────────────────────────────
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GH_PAT }}   # PAT with repo:write for auto-push
+
+      # ── 2. Python setup ──────────────────────────────────────────────────────
+      - name: Set up Python ${{ env.PYTHON_VERSION }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: "pip"
+
+      - name: Install dependencies
+        run: |
+          pip install psycopg2-binary requests python-dateutil
+
+      # ── 3. Download fresh data ───────────────────────────────────────────────
+      - name: Download EU Open Data – pesticides
+        if: matrix.niche == 'pesticides' && github.event.inputs.skip_import != 'yes'
+        run: |
+          mkdir -p data
+          # EU Pesticides MRL – official EC download
+          curl -fsSL \
+            "https://www.eurl-pesticides.eu/docs/public/tmplt_article.asp?CntID=821&Lang=EN" \
+            -o data/pesticides_raw.html 2>/dev/null || true
+          # Fallback: use bundled sample CSV if download fails
+          if [ ! -s data/pesticides_raw.html ]; then
+            echo "Using bundled sample data"
+            cp data/pesticides_sample.csv data/pesticides_import.csv 2>/dev/null || true
+          fi
+
+      - name: Download EU Open Data – climate
+        if: matrix.niche == 'climate' && github.event.inputs.skip_import != 'yes'
+        run: |
+          mkdir -p data
+          # DWD Open Data – recent temperature observations
+          curl -fsSL \
+            "https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/daily/kl/recent/KL_Tageswerte_Metadaten_Stationsname.txt" \
+            -o data/climate_stations.txt 2>/dev/null || true
+          cp data/climate_sample.csv data/climate_import.csv 2>/dev/null || true
+
+      - name: Download EU Open Data – procurement
+        if: matrix.niche == 'procurement' && github.event.inputs.skip_import != 'yes'
+        run: |
+          mkdir -p data
+          # TED (Tenders Electronic Daily) bulk CSV via data.europa.eu
+          # Real URL: https://data.europa.eu/data/datasets/ted-csv
+          curl -fsSL \
+            "https://data.europa.eu/api/hub/search/datasets/ted-1" \
+            -H "Accept: application/json" \
+            -o data/procurement_meta.json 2>/dev/null || true
+          cp data/procurement_sample.csv data/procurement_import.csv 2>/dev/null || true
+
+      # ── 4. Run pipeline ──────────────────────────────────────────────────────
+      - name: Run pipeline – ${{ matrix.niche }}
+        env:
+          NEON_DB_PESTICIDES:   ${{ secrets.NEON_DB_PESTICIDES }}
+          NEON_DB_CLIMATE:      ${{ secrets.NEON_DB_CLIMATE }}
+          NEON_DB_PROCUREMENT:  ${{ secrets.NEON_DB_PROCUREMENT }}
+          OPENROUTER_API_KEY:   ${{ secrets.OPENROUTER_API_KEY }}
+          OPENROUTER_MODEL:     ${{ env.OPENROUTER_MODEL }}
+        run: |
+          FLAGS=""
+          if [ "${{ github.event.inputs.skip_import }}" = "yes" ]; then
+            FLAGS="$FLAGS --skip-import"
+          fi
+          # Wednesday: insights-only refresh
+          if [ "$(date +%u)" = "3" ] && [ "${{ github.event_name }}" = "schedule" ]; then
+            FLAGS="$FLAGS --skip-import"
+          fi
+          python scripts/pipeline.py --niche ${{ matrix.niche }} $FLAGS
+
+      # ── 5. Commit & push generated files ────────────────────────────────────
+      - name: Configure git
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Commit static output
+        run: |
+          git add sites/
+          git diff --cached --quiet || \
+            git commit -m "auto: update ${{ matrix.niche }} $(date +'%Y-%m-%d %H:%M UTC')"
+
+      - name: Push to main
+        run: git push origin main
+
+      # ── 6. Trigger Vercel redeploy (optional webhook) ────────────────────────
+      - name: Trigger Vercel deploy hook – ${{ matrix.niche }}
+        if: ${{ vars[format('VERCEL_HOOK_{0}', matrix.niche)] != '' }}
+        run: |
+          HOOK_URL="${{ vars[format('VERCEL_HOOK_{0}', upper(matrix.niche))] }}"
+          curl -X POST "$HOOK_URL" || true
+
+  # ──────────────────────────────────────────────────────────────────────────
+  # Summary job (runs after all niches finish)
+  # ──────────────────────────────────────────────────────────────────────────
+  notify:
+    name: "Pipeline Summary"
+    runs-on: ubuntu-latest
+    needs: pipeline
+    if: always()
+    steps:
+      - name: Report status
+        run: |
+          echo "## Pipeline Run Complete" >> $GITHUB_STEP_SUMMARY
+          echo "| Niche | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|-------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| pesticides | ${{ needs.pipeline.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| climate | ${{ needs.pipeline.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| procurement | ${{ needs.pipeline.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Run at: $(date -u)" >> $GITHUB_STEP_SUMMARY

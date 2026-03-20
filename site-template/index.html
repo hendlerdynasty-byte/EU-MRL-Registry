@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EU Pesticides & MRL Database</title>
+  <meta name="description" content="Comprehensive EU Maximum Residue Levels database with AI-powered insights. Structured open data for food safety researchers, importers, and regulators." />
+
+  <!-- Schema.org JSON-LD injected from /public/schema.json -->
+  <script id="jsonld-placeholder" type="application/ld+json"></script>
+
+  <!-- Open Graph / AI crawler meta -->
+  <meta property="og:title" content="EU Pesticides & MRL Database" />
+  <meta property="og:description" content="EU open data: pesticide maximum residue levels with AI insights" />
+  <meta property="og:type" content="website" />
+
+  <!-- TollBit metatag (replace with your actual TollBit publisher tag) -->
+  <meta name="tollbit-publisher" content="YOUR_TOLLBIT_PUBLISHER_ID" />
+  <meta name="tollbit-price" content="0.02" />
+  <meta name="tollbit-currency" content="USD" />
+
+  <style>
+    :root {
+      --bg:       #0d1117;
+      --surface:  #161b22;
+      --border:   #30363d;
+      --accent:   #58a6ff;
+      --accent2:  #3fb950;
+      --warn:     #d29922;
+      --danger:   #f85149;
+      --text:     #e6edf3;
+      --muted:    #8b949e;
+      --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    /* ── Header ── */
+    header {
+      border-bottom: 1px solid var(--border);
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      background: var(--surface);
+      position: sticky; top: 0; z-index: 100;
+    }
+    header .logo { font-size: 18px; font-weight: 700; color: var(--accent); }
+    header .badge {
+      background: rgba(88,166,255,0.1);
+      border: 1px solid var(--accent);
+      color: var(--accent);
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+    header .updated { color: var(--muted); font-size: 12px; margin-left: auto; }
+
+    /* ── Layout ── */
+    main { max-width: 1400px; margin: 0 auto; padding: 24px; }
+
+    /* ── Insights card ── */
+    .insights-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 24px;
+    }
+    .insights-card h2 {
+      font-size: 13px; font-weight: 600; color: var(--muted);
+      text-transform: uppercase; letter-spacing: 0.08em;
+      margin-bottom: 12px;
+    }
+    .insights-card .summary { font-size: 15px; line-height: 1.7; margin-bottom: 16px; }
+    .findings-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 12px;
+    }
+    .finding {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 14px;
+    }
+    .finding .badge-sig {
+      font-size: 10px; font-weight: 700; text-transform: uppercase;
+      padding: 2px 6px; border-radius: 4px; margin-bottom: 8px; display: inline-block;
+    }
+    .badge-sig.high   { background: rgba(248,81,73,0.15);  color: var(--danger); }
+    .badge-sig.medium { background: rgba(210,153,34,0.15); color: var(--warn); }
+    .badge-sig.low    { background: rgba(63,185,80,0.15);  color: var(--accent2); }
+    .finding h3 { font-size: 13px; font-weight: 600; margin-bottom: 6px; }
+    .finding p  { font-size: 12px; color: var(--muted); line-height: 1.5; }
+
+    /* ── Stats row ── */
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+    .stat-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 16px;
+      text-align: center;
+    }
+    .stat-box .val { font-size: 28px; font-weight: 700; color: var(--accent); font-family: var(--font-mono); }
+    .stat-box .lbl { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; margin-top: 4px; }
+
+    /* ── Search + filter bar ── */
+    .toolbar {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+    .toolbar input, .toolbar select {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 8px 12px;
+      border-radius: 6px;
+      font-size: 13px;
+      outline: none;
+    }
+    .toolbar input { flex: 1; min-width: 200px; }
+    .toolbar input:focus, .toolbar select:focus { border-color: var(--accent); }
+    .toolbar .dl-btn {
+      background: rgba(88,166,255,0.1);
+      border: 1px solid var(--accent);
+      color: var(--accent);
+      padding: 8px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 13px;
+      text-decoration: none;
+      white-space: nowrap;
+    }
+    .toolbar .dl-btn:hover { background: rgba(88,166,255,0.2); }
+
+    /* ── Table ── */
+    .table-wrap {
+      overflow-x: auto;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+    }
+    table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    thead th {
+      background: var(--surface);
+      padding: 10px 14px;
+      text-align: left;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+      cursor: pointer;
+      user-select: none;
+    }
+    thead th:hover { color: var(--accent); }
+    tbody tr { border-bottom: 1px solid var(--border); transition: background 0.1s; }
+    tbody tr:last-child { border-bottom: none; }
+    tbody tr:hover { background: var(--surface); }
+    td { padding: 9px 14px; font-family: var(--font-mono); }
+    td.text-col { font-family: inherit; }
+    .mrl-high   { color: var(--danger);  font-weight: 600; }
+    .mrl-medium { color: var(--warn);    font-weight: 600; }
+    .mrl-low    { color: var(--accent2); }
+
+    /* ── Pagination ── */
+    .pagination {
+      display: flex; gap: 8px; align-items: center;
+      justify-content: center; margin-top: 16px; flex-wrap: wrap;
+    }
+    .pagination button {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 6px 12px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 12px;
+    }
+    .pagination button:hover  { border-color: var(--accent); color: var(--accent); }
+    .pagination button.active { background: var(--accent); color: #000; border-color: var(--accent); }
+    .pagination .info         { color: var(--muted); font-size: 12px; }
+
+    /* ── Footer ── */
+    footer {
+      border-top: 1px solid var(--border);
+      margin-top: 40px; padding: 20px 24px;
+      text-align: center; color: var(--muted); font-size: 12px;
+    }
+    footer a { color: var(--accent); text-decoration: none; }
+
+    /* ── Loading state ── */
+    .skeleton { animation: pulse 1.5s ease-in-out infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+    .sk-row { height: 36px; background: var(--surface); border-radius: 4px; margin: 4px 0; }
+  </style>
+</head>
+<body>
+
+<header>
+  <span class="logo">🌿 EU Pesticides MRL DB</span>
+  <span class="badge">OPEN DATA</span>
+  <span class="badge" style="border-color:var(--accent2);color:var(--accent2)">AI INSIGHTS</span>
+  <span class="updated" id="updated-at">Loading…</span>
+</header>
+
+<main>
+  <!-- Stats row -->
+  <div class="stats-row" id="stats-row">
+    <div class="stat-box skeleton"><div class="val">—</div><div class="lbl">Records</div></div>
+    <div class="stat-box skeleton"><div class="val">—</div><div class="lbl">Substances</div></div>
+    <div class="stat-box skeleton"><div class="val">—</div><div class="lbl">Products</div></div>
+    <div class="stat-box skeleton"><div class="val">—</div><div class="lbl">Avg MRL (mg/kg)</div></div>
+  </div>
+
+  <!-- AI Insights -->
+  <div class="insights-card" id="insights-card">
+    <h2>🤖 AI-Generated Insights</h2>
+    <p class="summary skeleton" id="insight-summary">Analyzing dataset…</p>
+    <div class="findings-grid" id="findings-grid"></div>
+  </div>
+
+  <!-- Toolbar -->
+  <div class="toolbar">
+    <input type="text" id="search" placeholder="🔍  Search substance or product…" />
+    <select id="group-filter">
+      <option value="">All groups</option>
+    </select>
+    <a id="dl-json" class="dl-btn" href="/public/data.json" download>⬇ JSON</a>
+    <a id="dl-csv"  class="dl-btn" href="/public/data.csv"  download>⬇ CSV</a>
+  </div>
+
+  <!-- Table -->
+  <div class="table-wrap">
+    <table id="data-table">
+      <thead>
+        <tr>
+          <th onclick="sortTable('substance')">Substance ↕</th>
+          <th onclick="sortTable('product')">Product ↕</th>
+          <th onclick="sortTable('product_group')">Group ↕</th>
+          <th onclick="sortTable('mrl_mg_kg')">MRL (mg/kg) ↕</th>
+          <th onclick="sortTable('regulation')">Regulation ↕</th>
+          <th onclick="sortTable('valid_from')">Valid From ↕</th>
+        </tr>
+      </thead>
+      <tbody id="table-body">
+        <!-- skeleton -->
+        <tr><td colspan="6"><div class="sk-row skeleton"></div></td></tr>
+        <tr><td colspan="6"><div class="sk-row skeleton"></div></td></tr>
+        <tr><td colspan="6"><div class="sk-row skeleton"></div></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="pagination" id="pagination"></div>
+</main>
+
+<footer>
+  Data sourced from the
+  <a href="https://data.europa.eu" target="_blank" rel="noopener">EU Open Data Portal</a>
+  · Licensed CC0 / Public Domain · AI insights by automated pipeline ·
+  <a href="/public/llms.txt">llms.txt</a> ·
+  <a href="/public/data.json">data.json</a> ·
+  <a href="/sitemap.xml">sitemap.xml</a>
+</footer>
+
+<script>
+// ── State ──────────────────────────────────────────────────────────────────────
+let allData     = [];
+let filteredData = [];
+let sortKey      = 'substance';
+let sortAsc      = true;
+let page         = 1;
+const PAGE_SIZE  = 50;
+
+// ── Boot ───────────────────────────────────────────────────────────────────────
+async function boot() {
+  try {
+    const [dataRes, insightRes] = await Promise.all([
+      fetch('/public/data.json'),
+      fetch('/public/insights.json'),
+    ]);
+    const dataPayload    = await dataRes.json();
+    const insightsPayload = await insightRes.json();
+
+    allData      = dataPayload.records || [];
+    filteredData = [...allData];
+
+    renderStats(insightsPayload.statistics, dataPayload.total);
+    renderInsights(insightsPayload);
+    populateGroupFilter();
+    renderTable();
+    renderPagination();
+
+    document.getElementById('updated-at').textContent =
+      'Updated: ' + (dataPayload.updated_at || '').slice(0, 10);
+
+    // Inject JSON-LD
+    const schemaRes = await fetch('/public/schema.json');
+    const schema    = await schemaRes.json();
+    document.getElementById('jsonld-placeholder').textContent = JSON.stringify(schema);
+
+  } catch (e) {
+    console.error('Boot error:', e);
+    document.getElementById('insight-summary').textContent = 'Error loading data.';
+  }
+}
+
+// ── Render Stats ───────────────────────────────────────────────────────────────
+function renderStats(stats, total) {
+  const substances = new Set(allData.map(r => r.substance)).size;
+  const products   = new Set(allData.map(r => r.product)).size;
+  const avg        = allData.reduce((s,r) => s + (parseFloat(r.mrl_mg_kg) || 0), 0) / (allData.length || 1);
+
+  document.getElementById('stats-row').innerHTML = `
+    <div class="stat-box"><div class="val">${(total||allData.length).toLocaleString()}</div><div class="lbl">Records</div></div>
+    <div class="stat-box"><div class="val">${substances}</div><div class="lbl">Substances</div></div>
+    <div class="stat-box"><div class="val">${products}</div><div class="lbl">Products</div></div>
+    <div class="stat-box"><div class="val">${avg.toFixed(2)}</div><div class="lbl">Avg MRL (mg/kg)</div></div>
+  `;
+}
+
+// ── Render Insights ────────────────────────────────────────────────────────────
+function renderInsights(ins) {
+  document.getElementById('insight-summary').textContent = ins.summary || '';
+  document.getElementById('insight-summary').classList.remove('skeleton');
+
+  const grid = document.getElementById('findings-grid');
+  grid.innerHTML = (ins.key_findings || []).map(f => `
+    <div class="finding">
+      <span class="badge-sig ${f.significance}">${f.significance}</span>
+      <h3>${esc(f.finding)}</h3>
+      <p>${esc(f.detail)}</p>
+    </div>
+  `).join('');
+}
+
+// ── Populate filter ────────────────────────────────────────────────────────────
+function populateGroupFilter() {
+  const groups = [...new Set(allData.map(r => r.product_group).filter(Boolean))].sort();
+  const sel    = document.getElementById('group-filter');
+  groups.forEach(g => {
+    const o = document.createElement('option');
+    o.value = g; o.textContent = g;
+    sel.appendChild(o);
+  });
+}
+
+// ── Table ──────────────────────────────────────────────────────────────────────
+function renderTable() {
+  const start = (page - 1) * PAGE_SIZE;
+  const slice = filteredData.slice(start, start + PAGE_SIZE);
+  const tbody = document.getElementById('table-body');
+  tbody.innerHTML = slice.map(r => `
+    <tr>
+      <td class="text-col">${esc(r.substance || '')}</td>
+      <td class="text-col">${esc(r.product || '')}</td>
+      <td class="text-col">${esc(r.product_group || '')}</td>
+      <td class="${mrlClass(r.mrl_mg_kg)}">${r.mrl_mg_kg ?? '—'}</td>
+      <td class="text-col">${esc(r.regulation || '')}</td>
+      <td>${r.valid_from ? r.valid_from.slice(0,10) : '—'}</td>
+    </tr>
+  `).join('');
+}
+
+function mrlClass(v) {
+  const n = parseFloat(v);
+  if (isNaN(n)) return '';
+  if (n > 5) return 'mrl-high';
+  if (n > 0.5) return 'mrl-medium';
+  return 'mrl-low';
+}
+
+// ── Sorting ────────────────────────────────────────────────────────────────────
+function sortTable(key) {
+  if (sortKey === key) sortAsc = !sortAsc;
+  else { sortKey = key; sortAsc = true; }
+  filteredData.sort((a, b) => {
+    const av = a[key] ?? '', bv = b[key] ?? '';
+    const n  = parseFloat(av) - parseFloat(bv);
+    const cmp = isNaN(n) ? String(av).localeCompare(String(bv)) : n;
+    return sortAsc ? cmp : -cmp;
+  });
+  page = 1;
+  renderTable();
+  renderPagination();
+}
+
+// ── Filtering ──────────────────────────────────────────────────────────────────
+document.getElementById('search').addEventListener('input', applyFilters);
+document.getElementById('group-filter').addEventListener('change', applyFilters);
+
+function applyFilters() {
+  const q   = document.getElementById('search').value.toLowerCase();
+  const grp = document.getElementById('group-filter').value;
+  filteredData = allData.filter(r =>
+    (!q   || (r.substance||'').toLowerCase().includes(q) || (r.product||'').toLowerCase().includes(q)) &&
+    (!grp || r.product_group === grp)
+  );
+  // re-apply sort
+  filteredData.sort((a, b) => {
+    const av = a[sortKey] ?? '', bv = b[sortKey] ?? '';
+    const n  = parseFloat(av) - parseFloat(bv);
+    const cmp = isNaN(n) ? String(av).localeCompare(String(bv)) : n;
+    return sortAsc ? cmp : -cmp;
+  });
+  page = 1;
+  renderTable();
+  renderPagination();
+}
+
+// ── Pagination ─────────────────────────────────────────────────────────────────
+function renderPagination() {
+  const total  = Math.ceil(filteredData.length / PAGE_SIZE);
+  const pEl    = document.getElementById('pagination');
+  let html     = `<span class="info">${filteredData.length} results</span>`;
+  const pages  = Array.from({length: total}, (_, i) => i + 1)
+    .filter(p => p === 1 || p === total || Math.abs(p - page) <= 2);
+
+  let prev = null;
+  for (const p of pages) {
+    if (prev && p - prev > 1) html += `<span class="info">…</span>`;
+    html += `<button onclick="goPage(${p})" class="${p === page ? 'active' : ''}">${p}</button>`;
+    prev = p;
+  }
+  pEl.innerHTML = html;
+}
+
+function goPage(p) { page = p; renderTable(); renderPagination(); window.scrollTo(0,0); }
+
+// ── Util ────────────────────────────────────────────────────────────────────────
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+boot();
+</script>
+</body>
+</html>

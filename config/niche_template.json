@@ -1,0 +1,29 @@
+{
+  "_comment": "Copy this file to config/niche_X.json for each new niche. Never commit secrets here.",
+  "niche_key":    "pesticides",
+  "db_project":   "eu-pesticides",
+  "title":        "EU Pesticides & MRL Database",
+  "description":  "Maximum Residue Levels for pesticides in EU food products",
+  "source_url":   "https://data.europa.eu/data/datasets/pesticides",
+  "license":      "CC0",
+  "attribution":  "European Union Open Data Portal",
+  "site_dir":     "sites/eu-pesticides",
+  "vercel_project": "eu-pesticides-mrl",
+  "tollbit_slug": "eu-pesticides-mrl",
+  "tollbit_price_usd": "0.02",
+  "tollbit_license_type": "summarization",
+  "schedule": {
+    "import":   "0 4 * * 1",
+    "insights": "0 5 * * 3"
+  },
+  "neon": {
+    "project_name": "eu-pesticides",
+    "region":       "aws-eu-central-1",
+    "secret_env":   "NEON_DB_PESTICIDES"
+  },
+  "openrouter": {
+    "model":      "meta-llama/llama-3.3-70b-instruct:free",
+    "max_tokens": 1800,
+    "prompt_file": "prompts/pesticides_insights.md"
+  }
+}
